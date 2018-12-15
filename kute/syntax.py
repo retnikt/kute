@@ -2,18 +2,30 @@ from PyQt5 import QtCore, QtGui
 from keyword import kwlist
 
 
-def make_style(color, weight=QtGui.QFont.Normal, italic=False):
+def make_style(color, weight: int=QtGui.QFont.Normal, italic: bool=False,
+               capitalization: QtGui.QFont.Capitalization=QtGui.QFont.MixedCase,
+               overline: bool=False, underline: bool=False, strikeout: bool=False,
+               underline_color: QtGui.QColor=None,
+               underline_style: QtGui.QTextCharFormat.UnderlineStyle=QtGui.QTextCharFormat.NoUnderline) \
+        -> QtGui.QTextCharFormat:
     format_ = QtGui.QTextCharFormat()
     format_.setForeground(QtGui.QColor(color))
     format_.setFontWeight(weight)
     format_.setFontItalic(italic)
+    format_.setFontCapitalization(capitalization)
+    format_.setFontOverline(overline)
+    format_.setFontUnderline(underline)
+    format_.setFontStrikeOut(strikeout)
+    if underline_color:
+        format_.setUnderlineColor(underline_color)
+    format_.setUnderlineStyle(underline_style)
     return format_
 
 
 class SyntaxHighlightStyles:
     keyword = make_style("yellow")
     operator = make_style("red")
-    brace = make_style("purple")
+    bracket = make_style("purple")
     identifier = make_style("blue")
     string = make_style("green")
     comment = make_style("gray", italic=True)
@@ -32,6 +44,7 @@ class PythonSyntaxHighlighter(QtGui.QSyntaxHighlighter):
 
     def __init__(self, style: SyntaxHighlightStyles, parent: QtGui.QTextDocument):
         super().__init__(parent)
+        self.style = style
         rules = []
         for kw in kwlist:
             rules.append(((r'\b' + kw + r'\b'), 0, self.style.keyword))
@@ -42,13 +55,13 @@ class PythonSyntaxHighlighter(QtGui.QSyntaxHighlighter):
         rules += [(r'\bself\b', 0, self.style.self),  # self token
                   (r'"[^"\\]*(\\.[^"\\]*)*"', 0, self.style.string),  # double quote string
                   (r"'[^'\\]*(\\.[^'\\]*)*'", 0, self.style.string),  # single quote string
-                  (r'\bdef\b\s*(\w+)', 1, self.styles.identifier),  # identifier after function
-                  (r'\bclass\b\s*(\w+)', 1, self.styles.identifier),  # identifier after class
-                  (r'#[^\n]*', 0, self.styles.comment),  # comment
-                  (r'\b[+-]?([0-9]*\.)?[0-9]+([eE][+-]?[0-9]+)?\b', 0, self.styles.number),  # decimal number
-                  (r'\b[+-]?0[xX][0-9a-fA-F]+\b', 0, self.styles.number),  # hex number
-                  (r'\b[+-]?0[bB][01]+\b', 0, self.styles.number),  # binary number
-                  (r'\b[+-]?0[oO][0-7]+\b', 0, self.styles.number),  # octal number
+                  (r'\bdef\b\s*(\w+)', 1, self.style.identifier),  # identifier after function
+                  (r'\bclass\b\s*(\w+)', 1, self.style.identifier),  # identifier after class
+                  (r'#[^\n]*', 0, self.style.comment),  # comment
+                  (r'\b[+-]?([0-9]*\.)?[0-9]+([eE][+-]?[0-9]+)?\b', 0, self.style.number),  # decimal number
+                  (r'\b[+-]?0[xX][0-9a-fA-F]+\b', 0, self.style.number),  # hex number
+                  (r'\b[+-]?0[bB][01]+\b', 0, self.style.number),  # binary number
+                  (r'\b[+-]?0[oO][0-7]+\b', 0, self.style.number),  # octal number
                   ]
         self.rules = [(QtCore.QRegExp(pattern), index, format_) for pattern, index, format_ in rules]
 
